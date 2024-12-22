@@ -1,0 +1,27 @@
+* {
+  margin: 0;
+  box-sizing: border-box;
+  font-family: Geneva, Verdana, Helvetica, sans-serif;
+}
+
+body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  letter-spacing: .5px;
+  font-size: 15px;
+}
+
+.container {
+  width: 90vw;
+  height: 90vh;
+  background-color: #ECECEC;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 255, 0.3);
+  display: flex;
+}
+
+p {
+  color: black;
+}

@@ -1,0 +1,23 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Allows anyone to read and write all data until a certain date you can change
+    match /{document=**} {
+      allow read, write: if request.time < timestamp.date(2024, 12, 20);
+    }
+
+    // Enforces unique document id (username) for 'users' collection
+    match /users/{userId} {
+      // Only allow creation if the username is unique
+      allow create: if !exists(/databases/$(database)/documents/users/$(request.resource.data.username));
+
+      // Allow updates only if username is unchanged or unique
+      allow update: if request.resource.data.username == resource.data.username || !exists(/databases/$(database)/documents/users/$(request.resource.data.username));
+
+      // Allow read if the user is authenticated
+      allow read: if request.auth != null;
+    }
+  }
+}
