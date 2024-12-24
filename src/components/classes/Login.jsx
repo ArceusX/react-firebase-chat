@@ -39,7 +39,7 @@ const Login = () => {
 
     try {
       const formData = new FormData(e.target);
-      const { username, email, password } = Object.fromEntries(formData);
+      const { username, email, password, rePassword } = Object.fromEntries(formData);
 
       const emptyFields = [];
       if (!username?.trim()) emptyFields.push("username");
