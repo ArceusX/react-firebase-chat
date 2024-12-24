@@ -31,8 +31,8 @@ const Login = () => {
     }
   };
 
-  // Check that no field is blank, then that username & email
-  // aren't already used. If checks pass, create documents in db
+  // Do usual checks (no blank field, password match, username & email
+  // are not already taken). If passed, create documents in db
   const handleRegister = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -44,10 +44,14 @@ const Login = () => {
       const emptyFields = [];
       if (!username?.trim()) emptyFields.push("username");
       if (!email?.trim()) emptyFields.push("email");
-      if (!password?.trim()) emptyFields.push("password");
+      if (!password) emptyFields.push("password");
       if (!avatar.file) emptyFields.push("avatar");
       if (emptyFields.length > 0) {
         return toast.warn(`These fields are empty: ${emptyFields.join(", ")}.`);
+      }
+
+      if (rePassword !== password) {
+        return toast.warn('The re-entered password does not match');
       }
 
       const userRef = doc(db, "users", username);
@@ -136,6 +140,7 @@ const Login = () => {
           <input type="text" placeholder="Username" name="username" />
           <input type="text" placeholder="Email" name="email" />
           <input type="password" placeholder="Password" name="password" />
+          <input type="password" placeholder="Re-Enter Password" name="rePassword" />
           <button disabled={loading}> {loading ? "Registering" : "Sign Up"} </button>
         </form>
       </div>

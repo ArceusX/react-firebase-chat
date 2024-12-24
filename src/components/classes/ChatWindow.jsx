@@ -116,8 +116,8 @@ const ChatWindow = () => {
       const recvChatRef = doc(db, "userChats", receiver.username, "chats", thisUser.username);
       const recvChatSnap = await getDoc(recvChatRef);
 
-      // 3. Check existence before updating receiver so to 
-      //    not re-add user who quit chat against its wish
+      // 3. Check existence before updating receiver so
+      //    to not re-add user who quit chat against wish
       if (recvChatSnap.exists()) {
         batch.update(recvChatRef, {
           lastMessage: text,
