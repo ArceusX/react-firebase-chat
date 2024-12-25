@@ -81,14 +81,14 @@ const ChatWindow = () => {
   const handleSend = async () => {
     if (text === "" && !img.file) return; 
 
-    let imgUrl = null, date = null;
+    let downloadUrl = null, uploadName = null, date = null;
     try {
       if (img.file) {
         // () around destructuring lets JS interpret already defined
         // variables as expression rather than as code block
-        ({downloadUrl: imgUrl, date} = await upload("uploads", img.file));
+        ({downloadUrl, uploadName, date} = await upload("uploads", img.file));
         
-        //setFile(thisUser.username, img.file.name, date, imgUrl);
+        //setFile(thisUser.username, img.file.name, date, downloadUrl);
         //({ fileOwner, fileName, fileDate, fileUrl } = useFileStore.getState());
       }
       else { date = new Date(); }
@@ -101,7 +101,7 @@ const ChatWindow = () => {
           sender: thisUser.username,
           text,
           createdAt: date, // Can't use serverTimestamp() in arrayUnion
-          ...(imgUrl && { img: imgUrl }),  // Write image URL if it's not null
+          ...(downloadUrl && { img: downloadUrl }),  // Write image URL if it's not null
         }),
       });
 

@@ -63,13 +63,14 @@ const Login = () => {
       await updateProfile(profile.user, {
         displayName: username,
       });
-      const {downloadUrl: imgUrl, date} = await upload("avatars", avatar.file);
+      const {downloadUrl, uploadName, date} = await upload("avatars", avatar.file);
 
       const batch = writeBatch(db);
 
       batch.set(doc(db, "users", username), {
         email,
-        avatar: imgUrl,
+        avatar: downloadUrl,
+        avatarName: uploadName,
         bio: "",
         uid: profile.user.uid,
         blockedUsers: [],
@@ -128,13 +129,13 @@ const Login = () => {
       <div className="item">
         <h2>Create Account</h2>
         <form onSubmit={handleRegister}>
-          <label htmlFor="file">
+          <label htmlFor="avatar">
             <img src={avatar.url || "./avatar.png"} alt="" />
             Upload Avatar
           </label>
           <input
             type="file"
-            id="file"
+            id="avatar"
             style={{ display: "none" }}
             onChange={handleAvatar} />
           <input type="text" placeholder="Username" name="username" />

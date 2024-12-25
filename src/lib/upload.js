@@ -5,12 +5,13 @@ const upload = async (path, file) => {
   const date = new Date();
   // Make string valid for file name
   const fixed = date.toISOString().replace(/[:.]/g, "-");
-  const storageRef = ref(storage, `${path}/${fixed}_${file.name}`);
+  const uploadName = `${fixed}_${file.name}`;
+  const storageRef = ref(storage, `${path}/${uploadName}`);
   
   try {
     const snap = await uploadBytes(storageRef, file);
     const downloadUrl = await getDownloadURL(snap.ref);
-    return {downloadUrl, date};
+    return {downloadUrl, uploadName, date};
   } catch (error) {
     throw error.code;
   }

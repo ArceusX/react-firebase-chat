@@ -21,4 +21,7 @@ export const useUserStore = create((set) => ({
       console.log(err);
     }
   },
+  setAvatar: (avatar) => set((state) => ({
+    thisUser: { ...state.thisUser, avatar } // Shorthand for avatar: avatar
+  })),
 }));
