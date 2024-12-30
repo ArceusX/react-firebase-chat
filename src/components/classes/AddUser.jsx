@@ -32,6 +32,7 @@ const AddUser = ({ setAddMode, defaultValue}) => {
   // Search for target username, failing for below cases:
   //    A. Target is thisUser: thisUser cannot join chat with itself
   //    B. Chat for target & thisUser already exists: open chat instead
+  //    C. Target has blocked thisUser: show searchMsg
   // Else, show card (avatar, username) & button to add button
   const handleSearch = async (e) => {
     e.preventDefault();
@@ -54,12 +55,19 @@ const AddUser = ({ setAddMode, defaultValue}) => {
       }
       else {
         const recvSnap = await getDoc(doc(db, "users", username));
+
         // Check if target username exists, then if chat between
         // thisUser & receiver already exists (ie thisChatSnap.exists())
         if (recvSnap.exists()) {
-          const thisChatRef = doc(db, "userChats", thisUser.username, "chats", username);
-          const thisChatSnap = await getDoc(thisChatRef);
-          setReceiver({...recvSnap.data(), username, });
+
+          if (recvSnap.data().blockedUsers.includes(thisUser.username)) {
+            setReceiver(null);
+            setSearchMsg(`${username} has blocked you.`);
+            setTimeout(() => { setSearchMsg(""); }, 3000);
+          }
+          else {
+            setReceiver({...recvSnap.data(), username, });
+          }
         }
         else {
           setReceiver(null);

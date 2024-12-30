@@ -17,6 +17,9 @@ import { useChatListStore } from "../../lib/chatListStore";
 
 import "../css/ChatWindow.css";
 
+// Icon to show for uploaded file that is not image
+const aImgPath = "./attachment.png";
+
 const ChatWindow = () => {
   const [messages, setMessages] = useState([]);
   const [emojiOn, setEmojiOn] = useState(false);
@@ -25,9 +28,10 @@ const ChatWindow = () => {
   const [text, setText] = useState("");
 
   // Used with handleImg. Reset after handleSend
-  const [img, setImg] = useState({
+  const [file, setFile] = useState({
     file: null,
     url: "",
+    name: "",
   });
 
   const { thisUser } = useUserStore();
@@ -66,30 +70,32 @@ const ChatWindow = () => {
     setEmojiOn(false);
   };
 
-  const handleImg = (e) => {
+  const handleFile = (e) => {
     if (e.target.files[0]) {
-      setImg({
-        file: e.target.files[0],
-        url: URL.createObjectURL(e.target.files[0]),
+      const selectedFile = e.target.files[0];
+
+      setFile({
+        file: selectedFile,
+        url: selectedFile.type.startsWith("image/")
+          ? URL.createObjectURL(selectedFile)
+          : null,
+        name: selectedFile.name,
       });
     }
   };
 
-  // Write to below 2 db documents, & 2 more if receiver is in chat:
+  // Write to below 2 db documents, & 2 other if receiver is in chat:
   //  "chats": chatId: messages;
   //  "userChats": thisUser.username: "chats": receiver.username; 
   const handleSend = async () => {
-    if (text === "" && !img.file) return; 
+    if (text === "" && !file.file) return; 
 
     let downloadUrl = null, uploadName = null, date = null;
     try {
-      if (img.file) {
+      if (file.file) {
         // () around destructuring lets JS interpret already defined
         // variables as expression rather than as code block
-        ({downloadUrl, uploadName, date} = await upload("uploads", img.file));
-        
-        //setFile(thisUser.username, img.file.name, date, downloadUrl);
-        //({ fileOwner, fileName, fileDate, fileUrl } = useFileStore.getState());
+        ({downloadUrl, uploadName, date} = await upload("uploads", file.file));
       }
       else { date = new Date(); }
 
@@ -101,7 +107,9 @@ const ChatWindow = () => {
           sender: thisUser.username,
           text,
           createdAt: date, // Can't use serverTimestamp() in arrayUnion
-          ...(downloadUrl && { img: downloadUrl }),  // Write image URL if it's not null
+          ...(file.url && { hasImg: true }),
+          ...(downloadUrl && { file: downloadUrl }),
+          ...(uploadName && { fileName: uploadName }),
         }),
       });
 
@@ -113,11 +121,12 @@ const ChatWindow = () => {
         updatedAt: serverTimestamp(),
       });
 
+      // 3. Check existence before updating receiver so
+      //    to not re-add user who quit chat against wish
+
       const recvChatRef = doc(db, "userChats", receiver.username, "chats", thisUser.username);
       const recvChatSnap = await getDoc(recvChatRef);
 
-      // 3. Check existence before updating receiver so
-      //    to not re-add user who quit chat against wish
       if (recvChatSnap.exists()) {
         batch.update(recvChatRef, {
           lastMessage: text,
@@ -125,7 +134,7 @@ const ChatWindow = () => {
           updatedAt: serverTimestamp(),
         });
 
-        // 4. Tell receiver to check for messages from thisUser
+        // 4. Alert receiver to new message from thisUser
         await updateDoc(doc(db, "users", receiver.username), {
           pending: arrayUnion(thisUser.username),
         });
@@ -138,7 +147,7 @@ const ChatWindow = () => {
     } catch (err) {
       console.log(err);
     } finally {
-      setImg({file: null, url: "",});
+      setFile({file: null, url: "", name: ""});
       setText("");
     }
   };
@@ -162,19 +171,35 @@ const ChatWindow = () => {
             }
             key={`${message.sender}-${message.createdAt?.toDate()}`}
           >
-            <div className="texts">
-              {message.img && <img src={message.img} alt="" />}
-              {message.text && (<p>{message.text}</p>)}
-              <span title={message.createdAt.toDate()}>
-                {format(message.createdAt.toDate())}
-              </span>
-            </div>
+          <div className="texts">
+            {message.file && (
+              <>
+              <a href={message.file} >
+                <img
+                  alt=""
+                  className={message.hasImg ? "" : "notImage"}
+                  src={message.hasImg ? message.file : aImgPath}
+                />
+              </a>
+              <span className="fileName">{message.fileName}</span>
+              </>
+            )}
+
+            {message.text && (<p>{message.text}</p>)}
+            <span title={message.createdAt.toDate()}>
+              {format(message.createdAt.toDate())}
+            </span>
+          </div>
           </div>
         ))}
-        {img.url && (
+        {file.file && (
           <div className="message own">
             <div className="texts">
-              <img src={img.url} alt="" />
+              <img alt=""
+              className={file.url ? "" : "notImage"}
+              src={file.url ? file.url : aImgPath} />
+
+              {!file.url && <span className="fileName">{file.name}</span>}
             </div>
           </div>
         )}
@@ -183,13 +208,13 @@ const ChatWindow = () => {
       <div className="bottom">
         <div className="icons">
           <label htmlFor="file">
-            <img src="./img.png" alt="" />
+            <img src="./clip.png" alt="" />
           </label>
           <input
             type="file"
             id="file"
             style={{ display: "none" }}
-            onChange={handleImg}
+            onChange={handleFile}
           />
         </div>
         <textarea

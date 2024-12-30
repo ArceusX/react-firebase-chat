@@ -15,6 +15,7 @@ const App = () => {
   const { thisUser, fetching, fetchUserData } = useUserStore();
   const { chatId } = useChatStore();
 
+  // Continue last session if not logged-out
   useEffect(() => {
     const unSub = onAuthStateChanged(auth, (user) => {
       fetchUserData(user?.displayName);
@@ -25,7 +26,7 @@ const App = () => {
 
   if (fetching) return <div className="container"></div>
   
-  // If thisUser (logged in), show dashboard. Else, show Login page
+// If thisUser (logged in), show dashboard. Else, show Login page
 return (
   <div className="container">
     {thisUser ? (

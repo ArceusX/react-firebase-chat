@@ -14,15 +14,17 @@ const UserPanel = () => {
   const { chatId, receiver, thisUserBlocked, receiverBlocked,
           toggleReceiverBlock, resetChat } = useChatStore();
   const { thisUser } = useUserStore();
-  const { chats, chatOrder, updateChat } = useChatListStore();
+  const { chats, chatOrder, getChat, updateChat } = useChatListStore();
 
   // 1. Toggle receiver's entry in thisUser's blockedUsers
-  // 2. Alert receiver that thisUser has toggled block
-  // 3. Alert receiver to check updates in pending
-  // 4. Toggle local state to re-render
+  // 2. If receiver hasn't left chat:
+  //    A. Alert receiver that thisUser toggles block
+  //    B. Alert receiver to check updates in pending
+  // 3. Toggle local state to re-render
   const handleBlock = async () => {
     const thisChatRef = doc(db, "users", thisUser.username);
-      const recvChatRef  = doc(db, "userChats", receiver.username, "chats", thisUser.username);
+    const recvChatRef = doc(db, "userChats", receiver.username, "chats", thisUser.username);
+    
     try {
       const batch = writeBatch(db);
 
@@ -30,13 +32,15 @@ const UserPanel = () => {
         blockedUsers: receiverBlocked ? arrayRemove(receiver.username) : arrayUnion(receiver.username),
       });
 
-      batch.update(recvChatRef, {                             // 2
-        blocked: !receiverBlocked,
-      });
+      if (!getChat(receiver.username).hasQuit) {
+        batch.update(recvChatRef, {                           // 2A
+          blocked: !receiverBlocked,
+        });
 
-      batch.update(doc(db, "users", receiver.username), {     // 3
-        pending: arrayUnion(thisUser.username),
-      });
+        batch.update(doc(db, "users", receiver.username), {   // 2B
+          pending: arrayUnion(thisUser.username),
+        });
+      }
 
       batch.commit();
       toggleReceiverBlock();
@@ -112,7 +116,7 @@ const UserPanel = () => {
             <div className="photoItem">
               <div className="photoDetail">
                 <img
-                  src="../../../public/alien.jpg"
+                  src="../../../public/attachment.png"
                   alt=""
                 />
                 <span>photo_2024_2.png</span>
@@ -122,7 +126,7 @@ const UserPanel = () => {
             <div className="photoItem">
               <div className="photoDetail">
                 <img
-                  src="../../../public/alien.jpg"
+                  src="../../../public/attachment.png"
                   alt=""
                 />
                 <span>photo_2024_2.png</span>
