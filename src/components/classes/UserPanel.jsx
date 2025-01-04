@@ -9,10 +9,17 @@ import { useChatListStore } from "../../lib/chatListStore";
 
 import "../css/UserPanel.css";
 
+function timestampToDate(t) {
+  return new Date(t.seconds * 1000).toLocaleDateString();
+}
+
 // Shows metadata & buttons to change settings when chat is open
-const UserPanel = () => {
+const UserPanel = ({ onMessageClick, alt }) => {
+
   const { chatId, receiver, thisUserBlocked, receiverBlocked,
-          toggleReceiverBlock, resetChat } = useChatStore();
+          toggleReceiverBlock, messages, pinnedList, resetChat }
+          = useChatStore();  
+      
   const { thisUser } = useUserStore();
   const { chats, chatOrder, getChat, updateChat } = useChatListStore();
 
@@ -90,50 +97,44 @@ const UserPanel = () => {
   return (
     <div className="userPanel">
       <div className="user">
-        <img src={receiver?.avatar || "./avatar.png"} alt="" />
-        <span className="username">{receiver?.username}</span>
+        <img src={receiver.avatar || "./avatar.png"} alt="" />
+        <span className="username">{receiver.username}</span>
+        <span className="date">
+          Joined On {new Date(receiver.createdAt.seconds * 1000).toLocaleDateString()}
+        </span>
         <div className="icons">
           <img src="./phone.png" alt="" />
-          <img src="./video.png" alt="" />
           <img src="./info.png" alt="" />
         </div>
       </div>
       <div className="info">
         <div className="option">
           <div className="title">
-            <span>Chat Settings</span>
-            <img src="./arrowDown.png" alt="" />
-          </div>
-        </div>
-        <div className="option">
-          <div className="title">
-            <span>Shared Files</span>
+            <span title="Click to scroll">Pinned</span>
             <img src="./arrowUp.png" alt="" />
           </div>
         </div>
         <div className="option">
-          <div className="photos">
-            <div className="photoItem">
-              <div className="photoDetail">
-                <img
-                  src="../../../public/attachment.png"
-                  alt=""
-                />
-                <span>photo_2024_2.png</span>
-              </div>
-              <img src="./download.png" alt="" className="icon" />
-            </div>
-            <div className="photoItem">
-              <div className="photoDetail">
-                <img
-                  src="../../../public/attachment.png"
-                  alt=""
-                />
-                <span>photo_2024_2.png</span>
-              </div>
-              <img src="./download.png" alt="" className="icon" />
-            </div>
-          </div>
+          {messages
+            .map((message, index) => {
+              if (pinnedList.includes(index)) {
+                return (
+                  <div
+                    key={index} 
+                    className="message"
+                    onClick={() => onMessageClick(index)} >
+                    <img
+                      style={{ visibility: message.file ? 'visible' : 'hidden' }}
+                      src={message.hasImg ? message.file : alt}
+                    />
+                    <span className="texts">
+                      {message.fileName ? message.fileName : message.text}
+                    </span>
+                  </div>
+                );
+              }
+              return null;
+            })}
         </div>
         <button onClick={handleBlock}>
           { thisUserBlocked ? "You Are Blocked" :

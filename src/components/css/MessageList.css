@@ -1,0 +1,80 @@
+.message-list {
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  gap: 20px;
+  padding-left: 5px;
+  padding-right: 10px;
+
+  .message {
+    max-width: 50%;
+    display: flex;
+    position: relative;
+    gap: 20px;
+
+    .pin-button {
+      display: none;
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 18px;
+      height: 18px;
+      background-color: green;
+      border-radius: 50%;
+      cursor: pointer;
+    }
+
+    .pinned {
+      display: block;
+    }
+
+    img {
+      width: 250px;
+      height: 250px;
+      border-radius: 0;
+      object-fit: cover;
+    }
+    .notImage {
+      width: 90px;
+      height: 90px;
+    }
+
+    &.own {
+      align-self: flex-end;
+
+      .texts {
+        p {
+          word-break: break-word; 
+          background-color: #d4fafc;
+        }
+      }
+    }
+    .texts {
+      width: 300px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+
+      p {
+        width: 100%;
+        padding: 15px;
+        border-radius: 10px;
+        background-color: #fad5c0;
+      }
+
+      span {
+        font-size: 13px;
+        color: green;
+      }
+
+      .fileName {
+        color: blue;
+        text-decoration: underline;
+      }
+    }
+  }
+
+  .message:hover .pin-button {
+    display: block;
+  }
+}

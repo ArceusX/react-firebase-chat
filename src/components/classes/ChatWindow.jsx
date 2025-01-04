@@ -1,6 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import EmojiPicker from "emoji-picker-react";
-import { format } from "timeago.js";
 import { onSnapshot, arrayUnion, query, collection,
          doc, getDoc, getDocs, updateDoc,
          serverTimestamp, writeBatch} from "firebase/firestore";
@@ -12,16 +11,14 @@ import { useChatStore } from "../../lib/chatStore";
 import { useUserStore } from "../../lib/userStore";
 import { useChatListStore } from "../../lib/chatListStore";
 
-// Currently unused. TODO Use it
-//import { useFileStore } from "../../lib/fileStore";
+import MessageList from "./MessageList";
 
 import "../css/ChatWindow.css";
 
-// Icon to show for uploaded file that is not image
-const aImgPath = "./attachment.png";
+const ChatWindow = ({ messageRefs, alt }) => {
 
-const ChatWindow = () => {
-  const [messages, setMessages] = useState([]);
+  const { setMessages, setPinnedList } = useChatStore();
+
   const [emojiOn, setEmojiOn] = useState(false);
 
   // Message typed in chat box. Used with handleEmoji, handleSend
@@ -44,12 +41,7 @@ const ChatWindow = () => {
   // Sent message is put as .lastMessage of matching chat card in ChatList
   const { updateLastMessage } = useChatListStore();
 
-  // Unused for feature yet to be implemented
-  //let { fileOwner, fileName, fileDate, fileUrl, setFile } = useFileStore();
-
-  const endRef = useRef(null);
-
-  // Fetch messages when selectChat changes chat in ChatWindow
+  // Fetch messages when loadChat changes chat in ChatWindow
   useEffect(() => {
     const unSub = onSnapshot(doc(db, "chats", chatId), (snap) => {
       setMessages(snap.data().messages);
@@ -58,12 +50,19 @@ const ChatWindow = () => {
     return () => { unSub(); };
   }, [chatId]);
 
-  // Auto scroll to bottom when messages change (new message added)
   useEffect(() => {
-    if (messages.length > 0) {
-      endRef.current?.scrollIntoView({ behavior: "smooth" });
-    }
-  }, [messages]);
+    const fetchPinnedList = async () => {
+      if (!receiver) {
+        setPinnedList([]);
+        return;
+      }
+      const thisChatRef = doc(db, "userChats", thisUser.username, "chats", receiver.username);
+      setPinnedList((await getDoc(thisChatRef)).data().pinnedList);
+    };
+
+    fetchPinnedList();
+  }, [receiver?.username]);
+
 
   const handleEmoji = (e) => {
     setText((prev) => prev + e.emoji);
@@ -158,52 +157,13 @@ const ChatWindow = () => {
         <div className="user">
           <img src={receiver.avatar || "./avatar.png"} alt="" />
           <div className="texts">
-            <span className="username">{receiver?.username}</span>
+            <span className="username">{receiver.username}</span>
             <p className="bio" title="Bio">{receiver.bio.trim()}</p>
           </div>
         </div>
       </div>
       <div className="center">
-        {messages.map((message) => (
-          <div
-            className={
-              message.sender === thisUser.username ? "message own" : "message"
-            }
-            key={`${message.sender}-${message.createdAt?.toDate()}`}
-          >
-          <div className="texts">
-            {message.file && (
-              <>
-              <a href={message.file} >
-                <img
-                  alt=""
-                  className={message.hasImg ? "" : "notImage"}
-                  src={message.hasImg ? message.file : aImgPath}
-                />
-              </a>
-              <span className="fileName">{message.fileName}</span>
-              </>
-            )}
-
-            {message.text && (<p>{message.text}</p>)}
-            <span title={message.createdAt.toDate()}>
-              {format(message.createdAt.toDate())}
-            </span>
-          </div>
-          </div>
-        ))}
-        {file.file && (
-          <div className="message own">
-            <div className="texts">
-              <img alt=""
-              className={file.url ? "" : "notImage"}
-              src={file.url ? file.url : aImgPath} />
-
-              {!file.url && <span className="fileName">{file.name}</span>}
-            </div>
-          </div>
-        )}
-        <div ref={endRef}></div>
+        <MessageList file={file} alt={alt} refs={messageRefs} />
       </div>
       <div className="bottom">
         <div className="icons">

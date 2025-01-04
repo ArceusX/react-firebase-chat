@@ -68,4 +68,10 @@ export const useChatListStore = create((set, get) => ({
       updateChat(chatItem);
     }
   },
+  resetChatList: () => {
+    set({
+      chatOrder: {},
+      chats: [],   
+    });
+  },
 }));

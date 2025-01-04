@@ -13,7 +13,7 @@ import "../css/AddUser.css";
 const AddUser = ({ setAddMode, defaultValue}) => {
 
   // Searched-for user
-  const [receiver, setReceiver] = useState(null);
+  const [target, setTarget] = useState(null);
 
   // Set by handleSearch; msg for failed search
   const [searchMsg, setSearchMsg] = useState("");
@@ -26,8 +26,9 @@ const AddUser = ({ setAddMode, defaultValue}) => {
   // Use to add chat card to ChatList
   const { getChat, updateChat } = useChatListStore();
   
+  // Receiver is user in ChatWindow and different from target
   // Use to open chat in ChatWindow with user just added
-  const { selectChat } = useChatStore();
+  const { receiver, pinnedList, loadChat } = useChatStore();
 
   // Search for target username, failing for below cases:
   //    A. Target is thisUser: thisUser cannot join chat with itself
@@ -40,7 +41,7 @@ const AddUser = ({ setAddMode, defaultValue}) => {
 
     if (username === "") return;
     if (username == thisUser.username) {
-      setReceiver(null);
+      setTarget(null);
       setSearchMsg("Cannot add yourself");
       setTimeout(() => { setSearchMsg(""); }, 3000);
       return;
@@ -50,27 +51,31 @@ const AddUser = ({ setAddMode, defaultValue}) => {
     try {
       const foundChat = getChat(username);
       if (foundChat) {
-        selectChat(foundChat.chatId, foundChat.user);
+        loadChat(
+          foundChat.chatId, foundChat.user,
+          receiver ? doc(db, "userChats", thisUser.username, "chats", receiver.username) : null,
+          { pinnedList }
+        ); // TODO Write pin
         setAddMode(false);
       }
       else {
         const recvSnap = await getDoc(doc(db, "users", username));
 
         // Check if target username exists, then if chat between
-        // thisUser & receiver already exists (ie thisChatSnap.exists())
+        // thisUser & target already exists (ie thisChatSnap.exists())
         if (recvSnap.exists()) {
 
           if (recvSnap.data().blockedUsers.includes(thisUser.username)) {
-            setReceiver(null);
+            setTarget(null);
             setSearchMsg(`${username} has blocked you.`);
             setTimeout(() => { setSearchMsg(""); }, 3000);
           }
           else {
-            setReceiver({...recvSnap.data(), username, });
+            setTarget({...recvSnap.data(), username, });
           }
         }
         else {
-          setReceiver(null);
+          setTarget(null);
           setSearchMsg(`${username} does not have a profile`);
           setTimeout(() => { setSearchMsg(""); }, 3000);
         }
@@ -83,18 +88,17 @@ const AddUser = ({ setAddMode, defaultValue}) => {
     }
   };
 
-  // Start chat for thisUser & receiver. Check if that chat exists & if..
-  // 1: chat already does: Copy receiver's ref & pass copy to thisUser
+  // Start chat for thisUser & target. Check if that chat exists & if..
+  // 1: chat already does: Copy target's ref & pass copy to thisUser
   // 2: chat does not    : Make new (setDoc) & assign refs to both users
-  // Collect chat info & receiver's user info & render item in ChatList
+  // Collect chat info & target's user info & render item in ChatList
   const handleAdd = async () => {
-
     setBtnDisabled(true);
 
     const thisChatsRef = doc(db, "userChats", thisUser.username);
-    const thisChatRef  = doc(thisChatsRef, "chats", receiver.username);
+    const thisChatRef  = doc(thisChatsRef, "chats", target.username);
 
-    const recvChatsRef = doc(db, "userChats", receiver.username);
+    const recvChatsRef = doc(db, "userChats", target.username);
     const recvChatRef  = doc(recvChatsRef, "chats", thisUser.username);
 
     let   chatData, recvChatSnap;
@@ -103,18 +107,16 @@ const AddUser = ({ setAddMode, defaultValue}) => {
     try {
       recvChatSnap = await getDoc(recvChatRef);
 
-      // If chat already exists, let thisUser rejoin by copying receiver's ref
+      // If chat already exists, let thisUser rejoin by copying target's ref
       if (recvChatSnap.exists()) {
-
-        // "replied : false": Inform thisUser it is their turn to reply
+        
+        // Store recv's old data, update hasQuit for recv, clear
+        // pinnedList in old data, write it for thisUser's
         chatData = { ...recvChatSnap.data(), hasQuit: false, replied: false };
-
-        // "hasQuit: false": Inform receiver that thisUser has rejoined
         batch.update(recvChatRef, { hasQuit: false });
-
+        chatData.pinnedList = [];
         batch.set(thisChatRef, chatData);
       }
-
       else {
         const newChatRef = doc(collection(db, "chats"));
         batch.set(newChatRef, {
@@ -126,27 +128,32 @@ const AddUser = ({ setAddMode, defaultValue}) => {
           chatId: newChatRef.id,
           lastMessage: "",
           updatedAt: serverTimestamp(),
-          replied: false,
-          hasQuit: false,
-          blocked: false,
+          pinnedList: [],
+          replied: false, // false: It's thisUser's turn to reply
+          hasQuit: false, // false: Target hasn't left
+          blocked: false, // false: Target hasn't blocked thisUser
         };
 
         batch.set(recvChatRef, chatData);
         batch.set(thisChatRef, chatData);
       }
 
-      // Alert receiver to pull updates for a chat
-      batch.update(doc(db, "users", receiver.username), {
+      // Alert target to pull updates for a chat
+      batch.update(doc(db, "users", target.username), {
           pending: arrayUnion(thisUser.username),
       });
 
       await batch.commit();
 
-      const recvSnap = await getDoc(doc(db, "users", receiver.username));
-      const user = ({...recvSnap.data(), username: receiver.username });
+      const recvSnap = await getDoc(doc(db, "users", target.username));
+      const user = ({...recvSnap.data(), username: target.username });
 
       updateChat({ ...chatData, user });
-      selectChat(recvChatSnap.data().chatId, user);
+      loadChat(
+        chatData.chatId, user,
+        receiver ? doc(db, "userChats", thisUser.username, "chats", receiver.username) : null,
+        { pinnedList }
+      ); // TODO Write pin
     } catch (err) {
       console.log(err);
     }
@@ -163,11 +170,11 @@ const AddUser = ({ setAddMode, defaultValue}) => {
         name="username" defaultValue={defaultValue} />
         <button disabled={btnDisabled} >Search</button>
       </form>
-      {receiver && (
+      {target && (
         <div className="user">
           <div className="detail">
-            <img src={receiver.avatar || "./avatar.png"} alt="" />
-            <span title={receiver.email} >{receiver.username}</span>
+            <img src={target.avatar || "./avatar.png"} alt="" />
+            <span title={target.email} >{target.username}</span>
           </div>
           <button disabled={btnDisabled} onClick={handleAdd}>Add User</button>
         </div>

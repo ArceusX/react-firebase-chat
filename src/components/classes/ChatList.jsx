@@ -34,7 +34,9 @@ const ChatList = () => {
 
   const { thisUser } = useUserStore();
   const { chats, setChats, updateChat } = useChatListStore();
-  let { chatId, receiver, selectChat, setThisUserBlock } = useChatStore();
+  let {
+    chatId, receiver, pinnedList,
+    loadChat, setThisUserBlock } = useChatStore();
 
   const [searchInput, setSearchInput] = useState('');
   const [filteredChats, setFilteredChats] = useState([]);
@@ -168,7 +170,11 @@ const ChatList = () => {
           key={chat.chatId}
           onClick={() => {
             setAddMode(false);
-            selectChat(chat.chatId, chat.user);
+            loadChat(
+              chat.chatId, chat.user,
+              receiver ? doc(db, "userChats", thisUser.username, "chats", receiver.username) : null,
+              { pinnedList }
+            ); // TODO Write pin
           }}
           style={{
             backgroundColor: chat?.replied ? "transparent" : "#82A8FF",
