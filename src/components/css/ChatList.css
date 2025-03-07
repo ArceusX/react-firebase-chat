@@ -1,19 +1,20 @@
 .chatList {
   overflow-y: auto;
-  font-size: 16px;
 
   .search {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     padding: 1.2rem;
+    width: 100%;
 
     .searchBar {
       background-color: #4A617A;
       display: flex;
       gap: 15px;
       border-radius: 10px;
-      padding: 10px;
+      padding: 6px 9px;
+      width:calc(100% - 60px);
 
       input {
         background-color: transparent;
@@ -23,19 +24,19 @@
         font-size: 1rem;
       }
 
-      input::placeholder {
+      ::placeholder {
         color: white;
       }
 
       img {
-        width: 20px;
-        height: 20px;
+        width: 50px;
+        height: 42.4px;
       }
     }
 
     .add {
-      width: 40px;
-      height: 40px;
+      width: 50px;
+      height: 50px;
       background-color: #3A4A6A;
       padding: 10px;
       border-radius: 10px;
@@ -44,12 +45,12 @@
   }
 
   .item {
-    max-width: 300px;
+    width: 90%;
     display: flex;
     align-items: center;
     gap: 20px;
     padding: 10px 20px;
-    margin-left: 1rem;
+    margin-left: 20px;
     cursor: pointer;
     border-bottom: 1px solid #dddddd35;
 
@@ -79,7 +80,6 @@
       p {
         word-break: break-word;
         overflow: hidden; 
-        font-size: 14px;
         max-height: 2.5em;
         color: green;
       }

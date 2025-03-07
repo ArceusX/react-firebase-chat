@@ -54,7 +54,7 @@ const App = () => {
   
 // If thisUser (logged in), show dashboard. Else, show Login page
 return (
-  <div className="container">
+  <div className="main-container">
     {thisUser ? (
       <>
         <ChatListPanel />

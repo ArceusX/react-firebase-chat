@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
-import EmojiPicker from "emoji-picker-react";
-import { onSnapshot, arrayUnion, query, collection,
-         doc, getDoc, updateDoc,
-         serverTimestamp, writeBatch} from "firebase/firestore";
+import React, { useEffect, useState, lazy, Suspense } from "react";
+import { onSnapshot, arrayUnion, doc, getDoc,
+         updateDoc, serverTimestamp, writeBatch} from "firebase/firestore";
+
+const EmojiPicker = React.lazy(() => import('emoji-picker-react'));
 
 import upload from "../../lib/upload";
 import { db, } from "../../lib/firebase";
@@ -177,7 +177,7 @@ const ChatWindow = ({ messageRefs, alt }) => {
           />
         </div>
         <textarea
-          rows="2" 
+          rows="2.75" 
           placeholder={
             thisUserBlocked ? "Blocked. Chat is disabled" :
             (receiverBlocked ? "Unblock to chat" : "Type your message") }
@@ -193,11 +193,16 @@ const ChatWindow = ({ messageRefs, alt }) => {
             onClick={() => setEmojiOn((prev) => !prev)}
           />
           <div className="picker">
-          <EmojiPicker 
-              open={emojiOn} 
-              onEmojiClick={handleEmoji}
-              categories={['smileys_people']} 
-              skinTonesDisabled={true} />
+            <Suspense fallback={<div>Loading Emojis...</div>}>
+              {emojiOn && (
+                <EmojiPicker
+                  open={emojiOn}
+                  onEmojiClick={handleEmoji}
+                  categories={['smileys_people']}
+                  skinTonesDisabled={true}
+                />
+              )}
+            </Suspense>
           </div>
         </div>
         <button

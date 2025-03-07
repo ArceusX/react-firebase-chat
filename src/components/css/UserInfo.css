@@ -14,7 +14,7 @@
     }
 
     .username {
-      font-size: 18px;
+      font-size: 1.3rem;
       font-weight: bold;
       color: green;
     }
@@ -22,12 +22,11 @@
 
   .bio {
     color: blue;
-    font-size: 14px;
     font-style: italic;
     margin-left: 16%;
     padding: 5px;
     padding-top: 0;
-    max-height: 3em;
+    max-height: 2.5rem;
     width: 85%;
     border: none;
     resize: none;

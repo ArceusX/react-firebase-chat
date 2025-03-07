@@ -11,6 +11,14 @@ import { useUserStore } from "../../lib/userStore";
 
 import "../css/Login.css";
 
+// Use: Check if username has char not allowed for use in Firestore key
+// For char in key, check if it exists in charsSet.
+// Thru hashing, set checks match in O(1) time, compared to Array's O(n) 
+function isInValidKey(key) {
+  const charsSet = new Set(["@", ".", "/", "\\", "\0", "\n", "\r", "\t", "~", "*", "[", "]", "#", "%"]);
+  return [...key].some(disallowed => charsSet.has(disallowed));
+}
+
 const Login = () => {
   const { thisUser, fetchUserData } = useUserStore();
 
@@ -39,17 +47,20 @@ const Login = () => {
 
     try {
       const formData = new FormData(e.target);
-      const { username, email, password, rePassword } = Object.fromEntries(formData);
+      let { username, email, password, rePassword } = Object.fromEntries(formData);
 
+      username = username.trim(), email = email.trim();
       const emptyFields = [];
-      if (!username.trim()) emptyFields.push("username");
-      if (!email.trim()) emptyFields.push("email");
+      if (!username) emptyFields.push("username");
+      if (!email) emptyFields.push("email");
       if (!password) emptyFields.push("password");
       if (!avatar.file) emptyFields.push("avatar");
       if (emptyFields.length > 0) {
         return toast.warn(`These fields are empty: ${emptyFields.join(", ")}.`);
       }
-
+      if (isInvalidUsername(username)) {
+        return toast.warn("Your username contains disallowed characters");
+      }
       if (rePassword !== password) {
         return toast.warn('The re-entered password does not match');
       }
@@ -77,8 +88,8 @@ const Login = () => {
         createdAt: serverTimestamp(),
         pending: [],
       });
-
       batch.set(doc(db, "userChats", username), {});
+      batch.set(doc(db, 'emails', email), { username });
 
       await batch.commit();
 

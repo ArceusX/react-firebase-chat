@@ -9,13 +9,27 @@ import { useChatStore } from "../../lib/chatStore";
 
 import "../css/AddUser.css";
 
-const AddUser = ({ setAddMode, defaultValue, delay = 3000}) => {
+const DEFAULT_MSG = "To exit, do an empty search";
+
+async function emailToUsername(value) {
+  try {
+    const emailSnap = await getDoc(doc(db, 'emails', value));
+    if (emailSnap.exists()) {
+      const username = emailSnap.data().username;
+      return username;
+    }
+  } catch (error) {}
+  return value;
+}
+
+const AddUser = (
+  { setAddMode, defaultValue, defaultMsg = DEFAULT_MSG, delay = 3000}) => {
 
   // Searched-for user. When clicked, opens "Add User" btn
   const [target, setTarget] = useState(null);
 
   // Set by handleSearch; msg for failed search
-  const [searchMsg, setSearchMsg] = useState("");
+  const [searchMsg, setSearchMsg] = useState(defaultMsg);
 
   // In handleSearch, handleAdd, disallows multiple btn clicks
   const [btnDisabled, setBtnDisabled] = useState(false);
@@ -30,20 +44,23 @@ const AddUser = ({ setAddMode, defaultValue, delay = 3000}) => {
   // current chat with receiver
   const { receiver, pinnedList, loadChat } = useChatStore();
 
-  // Search for target username, failing for below cases:
+  // Search for target username or email, failing if...
   //    A. Target is thisUser: thisUser cannot join chat with itself
   //    B. Chat for target & thisUser already exists: open chat instead
   //    C. Target has blocked thisUser: show searchMsg
   // Else, show card (avatar, username) & button to add button
   const handleSearch = async (e) => {
     e.preventDefault();
-    const username = e.target.elements.username.value;
+    let username = e.target.elements.username.value.trim();
 
-    if (username === "") return;
+    if (username === "") {
+      setAddMode(false);
+      return;
+    }
     if (username == thisUser.username) {    // Check for Case A
       setTarget(null);
       setSearchMsg("Cannot add yourself");
-      setTimeout(() => { setSearchMsg(""); }, delay);
+      setTimeout(() => { setSearchMsg(defaultMsg); }, delay);
       return;
     }
 
@@ -60,23 +77,28 @@ const AddUser = ({ setAddMode, defaultValue, delay = 3000}) => {
         setAddMode(false);
       }
       else {
+        if (username.includes("@")) {
+          username = await emailToUsername(username);
+        }
+
         const recvSnap = await getDoc(doc(db, "users", username));
 
-        // Check target username exists, & if so, if target has blocked thisUser
+        // Check target exists, & if so, if target has blocked thisUser
         if (recvSnap.exists()) {
           if (recvSnap.data().blockedUsers.includes(thisUser.username)) {
             setTarget(null);
             setSearchMsg(`${username} has blocked you.`);
-            setTimeout(() => { setSearchMsg(""); }, delay);
+            setTimeout(() => { setSearchMsg(defaultMsg); }, delay);
           }
           else {
             setTarget({...recvSnap.data(), username, });
+            setSearchMsg("");
           }
         }
         else {
           setTarget(null);
           setSearchMsg(`${username} does not have a profile`);
-          setTimeout(() => { setSearchMsg(""); }, delay);
+          setTimeout(() => { setSearchMsg(defaultMsg); }, delay);
         }
       }
     } catch (err) {
@@ -168,7 +190,7 @@ const AddUser = ({ setAddMode, defaultValue, delay = 3000}) => {
   return (
     <div className="addUser">
       <form onSubmit={handleSearch}>
-        <input type="text" placeholder="Username"
+        <input type="text" placeholder="Username or Email"
         name="username" defaultValue={defaultValue} />
         <button disabled={btnDisabled} >Search</button>
       </form>
@@ -178,7 +200,7 @@ const AddUser = ({ setAddMode, defaultValue, delay = 3000}) => {
             <img src={target.avatar || "./avatar.png"} alt="" />
             <span title={target.email} >{target.username}</span>
           </div>
-          <button disabled={btnDisabled} onClick={handleAdd}>Add User</button>
+          <button disabled={btnDisabled} onClick={handleAdd}>Add</button>
         </div>
       )}
       {searchMsg && (

@@ -1,6 +1,5 @@
 .userPanel {
-  min-width: 325px;
-  max-width: 400px;
+  width: max(325px, 25%);
 
   .user {
     margin-right: 5px;
@@ -11,13 +10,12 @@
     gap: 10px;
 
     .username {
-      font-size: 17px;
+      font-size: 1.3rem;
       font-weight: bold;
       color: red;
     }
 
     .date {
-      font-size: 14px;
       color: blue;
     }
 
@@ -75,7 +73,6 @@
           text-overflow: ellipsis;
           width: 240px;
           height: 40px;
-          font-size: 13.5px;
           line-height: 17px;
           padding: 2px;
           color: red;

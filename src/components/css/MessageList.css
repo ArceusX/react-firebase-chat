@@ -7,7 +7,7 @@
   padding-right: 10px;
 
   .message {
-    max-width: 50%;
+    width: max(250px, 45%);
     display: flex;
     position: relative;
     gap: 20px;
@@ -50,20 +50,18 @@
       }
     }
     .texts {
-      width: 300px;
       display: flex;
       flex-direction: column;
       gap: 5px;
+      width: 100%;
 
       p {
         width: 100%;
         padding: 15px;
         border-radius: 10px;
-        background-color: #fad5c0;
       }
 
       span {
-        font-size: 13px;
         color: green;
       }
 

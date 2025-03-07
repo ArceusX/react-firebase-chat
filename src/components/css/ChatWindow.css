@@ -1,5 +1,5 @@
 .chat {
-  width: 800px;
+  width: max(650px, 50%);
   border-left: 1px solid red;
   border-right: 1px solid red;
   height: 100%;
@@ -27,7 +27,6 @@
       }
 
       .texts {
-        width: 500px;
         display: flex;
         flex-direction: column;
         gap: 5px;
@@ -42,14 +41,13 @@
         }
 
         .username {
-          font-size: 18px;
+          font-size: 1.3rem;
           font-weight: bold;
           color: red;
         }
 
         p {
           word-break: break-word; 
-          font-size: 14px;
           font-weight: 300;
         }
       }
@@ -91,7 +89,6 @@
       outline: none;
       padding: 15px;
       border-radius: 10px;
-      font-size: 16px;
 
       &:disabled {
         cursor: not-allowed;
@@ -119,6 +116,8 @@
       border: none;
       border-radius: 5px;
       cursor: pointer;
+      width: 100px;
+      height: 50px;
 
       &:disabled {
         background-color: #5182feb4;
