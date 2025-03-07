@@ -7,23 +7,24 @@ import { useUserStore } from "../../lib/userStore";
 import { useChatStore } from "../../lib/chatStore";
 import { useChatListStore } from "../../lib/chatListStore";
 import AddUser from "./AddUser";
+import { format } from "timeago.js";
 
 import "../css/ChatList.css";
 
 const searchDelay = 300;
 const fetchDelay  = 50;
 
-// Used to explain what text being underlined/slashed in chat card means
+// Use to explain what text being underlined/slashed in chat card means
 const quitTitleMsg  = "User has quit chat, but you can still send unread messages";
 const blockTitleMsg = "This user has blocked you";
 
 /*
 search: 
     searchBar: Input on which to filter chats
-    img      : onClick toggles addMode; if True: show <AddUser />
+    add (img): onClick toggles addMode; if True: show <AddUser />
 
-filteredChats: Each chat has div that onClick, fetch & show messages
-               in ChatWindow. Each shows avatar, username, & lastMessage
+filteredChats: Each chat has div that onClick, fetch & show messages in
+               ChatWindow. Each shows avatar, username, & lastMessage
 AddUser: Toggle its render by clicking plus/minus img
 */
 const ChatList = () => {
@@ -34,25 +35,25 @@ const ChatList = () => {
 
   const { thisUser } = useUserStore();
   const { chats, setChats, updateChat } = useChatListStore();
-  let { chatId, receiver, selectChat, setThisUserBlock } = useChatStore();
+  let {
+    chatId, receiver, pinnedList,
+    loadChat, setThisUserBlocked } = useChatStore();
 
   const [searchInput, setSearchInput] = useState('');
   const [filteredChats, setFilteredChats] = useState([]);
 
   // Debounce limits frequency of function calls by delaying call 
-  // till delay time passed since last call rather than on each input
+  // till delay has passed since last call rather than on each input
   // Filter chats by username, email, lastMessage every {searchDelay}
   useEffect(() => {
     const debounceTimeout = setTimeout(() => {
-      if (searchInput === '') {
-        setFilteredChats(chats);
-      } else {
+      const s = searchInput.toLowerCase();
+      if (s === '') { setFilteredChats(chats); }
+      else {
         setFilteredChats(
           chats.filter(chat => {
-            const s = searchInput.toLowerCase();
-            return chat.user.username.toLowerCase().includes(s) ||
-                   chat.user.email.toLowerCase().includes(s) ||
-                   chat.lastMessage.toLowerCase().includes(s) }
+            return [chat.user.username, chat.user.email, chat.lastMessage]
+                   .some(field => field.toLowerCase().includes(s)); }
           )
         );
       }
@@ -80,8 +81,8 @@ const ChatList = () => {
           const chatsSnap = await getDocs(chatsRef);
           if (!chatsSnap.empty) {
 
-            // For each chatSnap, fetch chat info & chat partner's info
-            // For each, merge data, return promise  
+            // For each chatSnap, fetch chat info & chat partner's info,
+            // merge such data, return promise  
             promises = chatsSnap.docs.map((chatSnap) => {
               const item    = chatSnap.data();                 // 2
               const userRef = doc(db, "users", chatSnap.id);   // 3
@@ -124,12 +125,12 @@ const ChatList = () => {
               updateChat(chatItem, false); // false: chatItem is not deleted
             }
 
-            // If receiver (& ChatWindow is open), set block, disable chatbox 
+            // If receiver (eg ChatWindow is open), set block status
             receiver = useChatStore.getState().receiver;
             if (receiver) {
               const recvItem = chatItems.find(
                 item => receiver.username === item.user.username);
-              if (recvItem) setThisUserBlock(recvItem.blocked);
+              if (recvItem) setThisUserBlocked(recvItem.blocked);
             }
           }
         }
@@ -166,9 +167,14 @@ const ChatList = () => {
         <div
           className="item"
           key={chat.chatId}
+          title={format(chat.updatedAt.toDate())}
           onClick={() => {
             setAddMode(false);
-            selectChat(chat.chatId, chat.user);
+            loadChat(
+              chat.chatId, chat.user,
+              receiver ? doc(db, "userChats", thisUser.username, "chats", receiver.username) : null,
+              { pinnedList }
+            );
           }}
           style={{
             backgroundColor: chat?.replied ? "transparent" : "#82A8FF",
@@ -179,9 +185,9 @@ const ChatList = () => {
           title={chat.user.email} />
         <div className="texts">
           <span className= {
-            chat.hasQuit ? "line-through" : (chat.blocked ? "underline" : "")
+            chat.alone ? "line-through" : (chat.blocked ? "underline" : "")
           }
-          title = {chat.hasQuit ? quitTitleMsg: (chat.blocked ? blockTitleMsg : "")} >
+          title = {chat.alone ? quitTitleMsg: (chat.blocked ? blockTitleMsg : "")} >
             {chat.user.username}
           </span>
           <p>{chat.lastMessage}</p>

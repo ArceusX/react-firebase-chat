@@ -3,17 +3,22 @@
   max-width: 400px;
 
   .user {
+    margin-right: 5px;
     padding: 20px;
-    padding-bottom: 25px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 15px;
+    gap: 10px;
 
     .username {
       font-size: 17px;
       font-weight: bold;
       color: red;
+    }
+
+    .date {
+      font-size: 14px;
+      color: blue;
     }
 
     img {
@@ -34,6 +39,7 @@
   }
 
   .info {
+    margin-right: 5px;
     padding: 20px;
     display: flex;
     flex-direction: column;
@@ -59,43 +65,26 @@
         }
       }
 
-      .photos {
+      .message {
         display: flex;
-        flex-direction: column;
-        overflow-y: auto;
-        gap: 20px;
-        margin: 10px 0;
+        border-bottom: 1px solid #ccc;
 
-        .photoItem {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
+        .texts {
+          display: block;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          width: 240px;
+          height: 40px;
+          font-size: 13.5px;
+          line-height: 17px;
+          padding: 2px;
+          color: red;
+        }
 
-          .photoDetail {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-
-            img {
-              width: 40px;
-              height: 40px;
-              border-radius: 5px;
-              object-fit: cover;
-            }
-
-            span {
-              font-size: 14px;
-              color: green;
-            }
-          }
-
-          .icon {
-            width: 30px;
-            height: 30px;
-            padding: 0;
-            border-radius: 50%;
-            cursor: pointer;
-          }
+        img {
+          width: 40px;
+          height: 40px;
+          object-fit: cover;
         }
       }
     }

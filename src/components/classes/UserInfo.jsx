@@ -15,12 +15,12 @@ const maxBioLength = 75;
 const UserInfo = () => {
 
   const { thisUser, setAvatar } = useUserStore();
-  const [bio, setBio] = useState('Bio: Hit Enter to Change');
+  const [bio, setBio] = useState(thisUser.bio);
 
   // Attached to bio textarea, to write to db on 'Enter' press
   const handleKeyDown = async (event) => {
     if (event.key === 'Enter') {
-      // Prevent newline as 'Enter' is used to 'Submit'
+      // Prevent newline when using 'Enter' to 'Submit'
       event.preventDefault();
 
       const thisRef = doc(db, "users", thisUser.username);
@@ -28,12 +28,13 @@ const UserInfo = () => {
         await updateDoc(thisRef, { bio });
         toast.success("Bio successfully changed!");
       } catch (err) {
+        
         console.log(err);
       }
     }
   };
 
-  // Upload new avatar img, delete old img, update record, setAvatar in local 
+  // Upload new avatar, delete old, update ref in db, setAvatar in local 
   const handleAvatarChange = async (e) => {
     if (e.target.files[0]) {
       try {
@@ -71,6 +72,7 @@ const UserInfo = () => {
       type="text"
       className="bio"
       value={bio}
+      placeholder = 'Bio: Hit Enter to Change'
       onChange={(event) => setBio(event.target.value)}
       onKeyDown={handleKeyDown}
     />

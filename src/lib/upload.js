@@ -1,6 +1,7 @@
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import { storage } from "./firebase";
 
+// path is folder in Firebase Storage 
 const upload = async (path, file) => {
   const date = new Date();
   // Make string valid for file name
@@ -12,8 +13,9 @@ const upload = async (path, file) => {
     const snap = await uploadBytes(storageRef, file);
     const downloadUrl = await getDownloadURL(snap.ref);
     return {downloadUrl, uploadName, date};
-  } catch (error) {
-    throw error.code;
+  }
+  catch (err) {
+    console.log(err);
   }
 };
 

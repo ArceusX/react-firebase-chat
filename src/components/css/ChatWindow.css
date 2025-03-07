@@ -57,72 +57,19 @@
   }
 
   .center {
-    padding: 20px;
+    padding: 20px 0px 20px 10px;
     display: flex;
     flex-direction: column;
     gap: 20px;
     overflow-y: auto;
-
-    .message {
-      max-width: 50%;
-      display: flex;
-      gap: 20px;
-
-      &.own {
-        align-self: flex-end;
-
-        .texts {
-          p {
-            word-break: break-word; 
-            background-color: #d4fafc;
-          }
-        }
-      }
-
-      img {
-        width: 30px;
-        height: 30px;
-        border-radius: 50%;
-        object-fit: cover;
-      }
-      .texts {
-        width: 300px;
-        display: flex;
-        flex-direction: column;
-        gap: 5px;
-
-        img {
-          max-width: 150px;
-          max-height: 150px;
-          width: auto;
-          height: auto;
-          object-fit: contain;
-          border-radius: 0;
-          object-fit: cover;
-        }
-
-        p {
-          width: 100%;
-          word-break: break-word; 
-          padding: 15px;
-          background-color: #fef3e8;
-          border-radius: 10px;
-        }
-
-        span {
-          font-size: 13px;
-          color: green;
-        }
-      }
-    }
   }
 
   .bottom {
-    padding: 20px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 15px;
+    padding: 20px 25px 20px 15px;
     margin-top: auto;
 
     .icons {

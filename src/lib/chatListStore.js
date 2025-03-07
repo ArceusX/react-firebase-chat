@@ -25,32 +25,25 @@ export const useChatListStore = create((set, get) => ({
     if (username in chatOrder) {
       return chats[chatOrder[username]];
     }
-    else return null;
+    return null;
   },
 
-  // If target chatItem is in chats: delete it, then if !toDelete,
-  // push new copy of same chatItem. Either case, fill hole by shifting
-  // chatItems positioned after it
-  // If target chatItem is not & !toDelete, append it (no shift needed)
+  // Delete chatItem in chats. Then if !toDelete, prepend chatItem
+  // In effect, if found, shift chatItem to front; else, prepend new
   updateChat: (chatItem, toDelete = false) => {
-    const { chats, chatOrder } = get();
+    let { chats, chatOrder } = get();
     const username = chatItem.user.username;
 
     if (username in chatOrder) {
       const index = chatOrder[username];
       chats.splice(index, 1);
-
-      if (!toDelete) {
-        chats.unshift(chatItem);
-      } else {
-        delete chatOrder[username];
-      }
     } 
-    else if (!toDelete) {
+    if (!toDelete) {
       chats.unshift(chatItem);
     }
 
     // Update chatOrder indices for all items
+    chatOrder = []
     for (let i = 0; i < chats.length; i++) {
       chatOrder[chats[i].user.username] = i;
     }
@@ -67,5 +60,11 @@ export const useChatListStore = create((set, get) => ({
       chatItem.replied = true;
       updateChat(chatItem);
     }
+  },
+  resetChatList: () => {
+    set({
+      chatOrder: {},
+      chats: [],   
+    });
   },
 }));

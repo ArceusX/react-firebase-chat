@@ -9,20 +9,29 @@ import { useChatListStore } from "../../lib/chatListStore";
 
 import "../css/UserPanel.css";
 
+function timestampToDate(t) {
+  return new Date(t.seconds * 1000).toLocaleDateString();
+}
+
 // Shows metadata & buttons to change settings when chat is open
-const UserPanel = () => {
+const UserPanel = ({ onMessageClick, alt }) => {
+
   const { chatId, receiver, thisUserBlocked, receiverBlocked,
-          toggleReceiverBlock, resetChat } = useChatStore();
+          toggleReceiverBlock, messages, pinnedList, resetChat }
+          = useChatStore();  
+      
   const { thisUser } = useUserStore();
-  const { chats, chatOrder, updateChat } = useChatListStore();
+  const { chats, chatOrder, getChat, updateChat } = useChatListStore();
 
   // 1. Toggle receiver's entry in thisUser's blockedUsers
-  // 2. Alert receiver that thisUser has toggled block
-  // 3. Alert receiver to check updates in pending
-  // 4. Toggle local state to re-render
+  // 2. If thisUser hasn't left (ie thisUser is not alone):
+  //    A. Alert receiver that thisUser toggles block
+  //    B. Alert receiver to check updates in pending
+  // 3. Toggle local state to re-render
   const handleBlock = async () => {
     const thisChatRef = doc(db, "users", thisUser.username);
-      const recvChatRef  = doc(db, "userChats", receiver.username, "chats", thisUser.username);
+    const recvChatRef = doc(db, "userChats", receiver.username, "chats", thisUser.username);
+    
     try {
       const batch = writeBatch(db);
 
@@ -30,13 +39,15 @@ const UserPanel = () => {
         blockedUsers: receiverBlocked ? arrayRemove(receiver.username) : arrayUnion(receiver.username),
       });
 
-      batch.update(recvChatRef, {                             // 2
-        blocked: !receiverBlocked,
-      });
+      if (!getChat(receiver.username).alone) {
+        batch.update(recvChatRef, {                           // 2A
+          blocked: !receiverBlocked,
+        });
 
-      batch.update(doc(db, "users", receiver.username), {     // 3
-        pending: arrayUnion(thisUser.username),
-      });
+        batch.update(doc(db, "users", receiver.username), {   // 2B
+          pending: arrayUnion(thisUser.username),
+        });
+      }
 
       batch.commit();
       toggleReceiverBlock();
@@ -58,7 +69,7 @@ const UserPanel = () => {
       const batch = writeBatch(db);
 
       if (recvChat.exists()) {            // 2A
-        batch.update(recvRef, { hasQuit: true });
+        batch.update(recvRef, { alone: true });
 
         batch.update(doc(db, "users", receiver.username), {
           pending: arrayUnion(thisUser.username),
@@ -86,50 +97,44 @@ const UserPanel = () => {
   return (
     <div className="userPanel">
       <div className="user">
-        <img src={receiver?.avatar || "./avatar.png"} alt="" />
-        <span className="username">{receiver?.username}</span>
+        <img src={receiver.avatar || "./avatar.png"} alt="" />
+        <span className="username">{receiver.username}</span>
+        <span className="date">
+          Joined On {new Date(receiver.createdAt.seconds * 1000).toLocaleDateString()}
+        </span>
         <div className="icons">
           <img src="./phone.png" alt="" />
-          <img src="./video.png" alt="" />
           <img src="./info.png" alt="" />
         </div>
       </div>
       <div className="info">
         <div className="option">
           <div className="title">
-            <span>Chat Settings</span>
-            <img src="./arrowDown.png" alt="" />
-          </div>
-        </div>
-        <div className="option">
-          <div className="title">
-            <span>Shared Files</span>
+            <span title="Click to scroll">Pinned</span>
             <img src="./arrowUp.png" alt="" />
           </div>
         </div>
         <div className="option">
-          <div className="photos">
-            <div className="photoItem">
-              <div className="photoDetail">
-                <img
-                  src="../../../public/alien.jpg"
-                  alt=""
-                />
-                <span>photo_2024_2.png</span>
-              </div>
-              <img src="./download.png" alt="" className="icon" />
-            </div>
-            <div className="photoItem">
-              <div className="photoDetail">
-                <img
-                  src="../../../public/alien.jpg"
-                  alt=""
-                />
-                <span>photo_2024_2.png</span>
-              </div>
-              <img src="./download.png" alt="" className="icon" />
-            </div>
-          </div>
+          {messages
+            .map((message, index) => {
+              if (pinnedList.includes(index)) {
+                return (
+                  <div
+                    key={index} 
+                    className="message"
+                    onClick={() => onMessageClick(index)} >
+                    <img
+                      style={{ visibility: message.file ? 'visible' : 'hidden' }}
+                      src={message.hasImg ? message.file : alt}
+                    />
+                    <span className="texts">
+                      {message.fileName ? message.fileName : message.text}
+                    </span>
+                  </div>
+                );
+              }
+              return null;
+            })}
         </div>
         <button onClick={handleBlock}>
           { thisUserBlocked ? "You Are Blocked" :

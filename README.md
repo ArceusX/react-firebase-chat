@@ -7,11 +7,11 @@ View the app live here: [React Chat App](https://react-chat-e1bd4.web.app/)
 
 ## Features
 - Data is fetched & updated incrementally. Rather than all data being fetched, which is costly,
-only data that last changed is. eg., Only new messages to a user rather than all messages ever sent
+only data that last changed is. eg., Only new messages rather than all messages ever received
 - Block feature that disables chatting until the block is lifted
+- Pin a comment to save & effortless scroll to it. Pins are saved in database
 - Users can upload an avatar image and write a bio
 - Users can send files, images, & emojis
-- A user can quit a chat and rejoin the chat to see all messages again (as long as both people have not both quit)
 
 ## Technologies Used
 
@@ -50,10 +50,13 @@ npm install firebase # Enable importing Firebase library in code
 npm run build # Build optimized build folder before deploying to Firebase
 firebase deploy
 ```
-
 2. **Run Locally**
 
 ```bash
 npm install # Install Dependencies
 npm run dev # App will run on http://localhost:5173/
 ```
+
+![Demo3](https://github.com/ArceusX/react-firebase-chat/blob/main/demos/demo3.PNG)
+![Demo2](https://github.com/ArceusX/react-firebase-chat/blob/main/demos/demo2.PNG)
+![Demo1](https://github.com/ArceusX/react-firebase-chat/blob/main/demos/demo1.PNG)

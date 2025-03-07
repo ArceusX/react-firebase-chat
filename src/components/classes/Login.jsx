@@ -31,8 +31,8 @@ const Login = () => {
     }
   };
 
-  // Do usual checks (no blank field, password match, username & email
-  // are not already taken). If passed, create documents in db
+  // If usual checks pass (no blank field, passwords match,
+  // username & email are not taken), create documents in db
   const handleRegister = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -42,8 +42,8 @@ const Login = () => {
       const { username, email, password, rePassword } = Object.fromEntries(formData);
 
       const emptyFields = [];
-      if (!username?.trim()) emptyFields.push("username");
-      if (!email?.trim()) emptyFields.push("email");
+      if (!username.trim()) emptyFields.push("username");
+      if (!email.trim()) emptyFields.push("email");
       if (!password) emptyFields.push("password");
       if (!avatar.file) emptyFields.push("avatar");
       if (emptyFields.length > 0) {
